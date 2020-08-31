@@ -1,0 +1,23 @@
+{
+  "Unsplash": {
+    "AccessKey": "",
+    "ApiURL": "https://api.unsplash.com",
+    "RandomPhotosPath": "/photos/random",
+    "ImageCount": 10,
+    "Queries": [
+      "bleak",
+      "dark",
+      "nature",
+      "gloomy"
+    ]
+  },
+  "Telegram": {
+    "BotToken": "",
+    "ApiURL": "https://api.telegram.org/bot",
+    "SendingIntervalInMinutes": 90,
+    "ChatIds": [
+
+    ],
+    "DisableNotification": true
+  }
+}
