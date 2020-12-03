@@ -36,11 +36,13 @@ type Photo struct {
 
 func main() {
 	config := readConfig()
+	SetPreviouslySentImages()
 
 	interval := time.Duration(config.Telegram.SendingIntervalInMinutes)
 	c := time.Tick(interval * time.Minute)
 
 	for range c {
+		config = readConfig()
 		photo := GetRandomPhoto(config.Unsplash)
 		sendPhoto(photo, config.Telegram)
 	}
@@ -55,7 +57,6 @@ func readConfig() Configuration {
 	if err != nil {
 		log.Fatal("error:", err)
 	}
-	log.Println("Successfully read the configuration.")
 
 	return configuration
 }

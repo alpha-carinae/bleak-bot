@@ -1,17 +1,20 @@
 package main
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"math/rand"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 )
 
-type void struct {}
+type void struct{}
+
 var placeHolder void
 
 var sentImages = make(map[string]void) // set
@@ -31,6 +34,9 @@ func GetRandomPhoto(config UnsplashConfig) Photo {
 	}
 
 	index := getRandomIndex(&objArr)
+	if index == -1 {
+		return Photo{"", "", ""}
+	}
 
 	id := fmt.Sprintf("%s", objArr[index]["id"])
 
@@ -41,9 +47,10 @@ func GetRandomPhoto(config UnsplashConfig) Photo {
 		description = fmt.Sprintf("%s", objArr[index]["description"])
 	}
 
-	imageUrl := fmt.Sprintf( "%s", objArr[index]["urls"].(map[string]interface{})["regular"])
+	imageUrl := fmt.Sprintf("%s", objArr[index]["urls"].(map[string]interface{})["regular"])
 
 	sentImages[id] = placeHolder
+	saveId(id)
 
 	return Photo{id, description, imageUrl}
 }
@@ -51,6 +58,10 @@ func GetRandomPhoto(config UnsplashConfig) Photo {
 // From what I've experienced, Unsplash's random API is not that random.
 // So, this function tries to get random index until it finds an image that hasn't been sent before.
 func getRandomIndex(objArr *[]map[string]interface{}) int {
+
+	if len(*objArr) == 0 {
+		return -1
+	}
 
 	rand.Seed(time.Now().UnixNano())
 	randIdx := rand.Intn(len(*objArr))
@@ -99,4 +110,34 @@ func FetchRandomPhotos(config UnsplashConfig) string {
 	}
 	//log.Printf("response Body: %s", bytes)
 	return string(bytes)
+}
+
+func saveId(imageId string) {
+	file, err := os.OpenFile("sentImages.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Println(err)
+	}
+	defer file.Close()
+	if _, err := file.WriteString(fmt.Sprintf("%s\n", imageId)); err != nil {
+		log.Println(err)
+	}
+}
+
+func SetPreviouslySentImages() {
+	file, err := os.Open("sentImages.log")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		sentImages[scanner.Text()] = placeHolder
+	}
+
+	log.Printf("Set %d previously sent images.\n", len(sentImages))
+
+	if err := scanner.Err(); err != nil {
+		log.Fatal(err)
+	}
 }
