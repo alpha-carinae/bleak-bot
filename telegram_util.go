@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -26,19 +27,18 @@ func sendPhoto(photo Photo, config TelegramConfig) {
 			continue
 		}
 
+		defer resp.Body.Close()
 		if resp.StatusCode == http.StatusOK {
 			log.Println("Photo sent.")
+			io.Copy(ioutil.Discard, resp.Body)
 		} else {
 			log.Println("Could not send photo: ", resp.StatusCode)
-
 			log.Println("response: ", resp)
 			bytes, err := ioutil.ReadAll(resp.Body)
 			if err != nil {
 				log.Println("Error reading response: ", err)
-				continue
 			}
 			log.Printf("response Body: %s", bytes)
-			resp.Body.Close()
 		}
 	}
 }
