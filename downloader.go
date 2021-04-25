@@ -21,7 +21,10 @@ var sentImages = make(map[string]void) // set
 
 // Picks random photo from fetched images and returns.
 func GetRandomPhoto(config UnsplashConfig) Photo {
-	photosJson := FetchRandomPhotos(config)
+	photosJson, err := FetchRandomPhotos(config)
+	if err != nil {
+		return Photo{"", "", ""}
+	}
 
 	var objArr []map[string]interface{}
 	decoder := json.NewDecoder(strings.NewReader(photosJson))
@@ -84,7 +87,7 @@ func getRandomIndex(objArr *[]map[string]interface{}) int {
 }
 
 // Fetches image data by given configuration and returns as json.
-func FetchRandomPhotos(config UnsplashConfig) string {
+func FetchRandomPhotos(config UnsplashConfig) (string, error) {
 	client := &http.Client{}
 
 	url := fmt.Sprintf("%s%s?count=%d&query=%s",
@@ -101,6 +104,11 @@ func FetchRandomPhotos(config UnsplashConfig) string {
 	req.Header.Add("Accept-Version", "v1")
 	resp, err := client.Do(req)
 
+	if err != nil {
+		log.Println("Host returned error: ", err)
+		return "", err
+	}
+	
 	defer resp.Body.Close()
 
 	//log.Println("response: ", resp)
@@ -109,7 +117,7 @@ func FetchRandomPhotos(config UnsplashConfig) string {
 		log.Println("Error reading response: ", err)
 	}
 	//log.Printf("response Body: %s", bytes)
-	return string(bytes)
+	return string(bytes), nil
 }
 
 func saveId(imageId string) {
